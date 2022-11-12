@@ -1,8 +1,7 @@
-from re import search
 from URLCollecter import getLinkList
 from Search import Search
-import CorrectImage
-import test
+import SelectImageUrl
+import GetExLinks
 
 if __name__ == '__main__':
     search = Search()
@@ -12,8 +11,7 @@ if __name__ == '__main__':
     internalLinks = getLinkList.getInLinks(url)
     externalLinks = getLinkList.getExLinks(url)
 
-    print(externalLinks, "\n", "###"*3)
+    if externalLinks != []:
+        SelectImageUrl.urlSelect(externalLinks)
 
-    CorrectImage.urlSelect(externalLinks)
-
-    test.getLinks()
+    getEx = GetExLinks.getLinks()

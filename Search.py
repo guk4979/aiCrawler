@@ -1,5 +1,3 @@
-from typing import AnyStr
-from urllib import request
 import Rule
 from URLCollecter import getLinkList
 from selenium import webdriver

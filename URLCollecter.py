@@ -1,10 +1,7 @@
-from multiprocessing.resource_sharer import stop
 from urllib.parse import urlparse
 import urllib.request
 from urllib import error
-from wsgiref import headers
 from bs4 import BeautifulSoup
-from time import sleep 
 import re
 
 
@@ -18,7 +15,7 @@ class getUrl:
             html = urllib.request.urlopen(req)
         except error.HTTPError as err: 
             print(err.code)
-            exit()
+            return 0
         self.bs = BeautifulSoup(html, 'html.parser')
         self.domain = urlparse(startingPage).netloc
         self.includeUrl = '{}://{}'.format(urlparse(startingPage).scheme, urlparse(startingPage).netloc)
@@ -39,8 +36,9 @@ class getUrl:
     def getExternalLinks(self):
         externalLinks = []
         for link in self.bs.findAll('a', href=re.compile('^(http|www)((?!' + self.domain + ').)*$')):
-            if link.attrs['href'] not in externalLinks:
-                externalLinks.append(link.attrs['href'])
+            if link.attrs['href'] is not None:
+                if link.attrs['href'] not in externalLinks:
+                    externalLinks.append(link.attrs['href'])
         
         return externalLinks
 
@@ -49,7 +47,10 @@ class getLinkList():
     def getInLinks(startPage): #외부 링크 리턴
         
         allIntLinks = []
-        url = getUrl(startPage)
+        try:
+            url = getUrl(startPage)
+        except Exception as e:
+            return None
         internalLinks = url.getInternalLinks() 
 
         for link in internalLinks:
@@ -58,9 +59,12 @@ class getLinkList():
         
         return allIntLinks
 
-    def getExLinks(startPage): #내부 링크 리턴
+    def getExLinks(startPage): #외부 링크 리턴
         allExtLinks = []
-        url = getUrl(startPage)
+        try:
+            url = getUrl(startPage)
+        except Exception as e:
+            return None
         externalLinks = url.getExternalLinks()
 
         for link in externalLinks:

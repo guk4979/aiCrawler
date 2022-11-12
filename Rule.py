@@ -1,5 +1,5 @@
-startUrl = "https://www.bing.com"
+startUrl = "https://www.google.com"
 searchUrl = None
-keyword = "cat"
-
-lst = [3,5,1]
+keyword = "dog"
+correctImageUrl = []
+IncorrectImageUrl = []
