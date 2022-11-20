@@ -1,12 +1,13 @@
 import re
 import Rule
 from PipeLine import PipeLine
+from urllib.parse import quote
 
 
 def urlSelect(urlLists): #검색엔진의 이미지 검색 url 찾기
     urls = []
     for url in urlLists:
-        if(re.search("(img|images|{})".format(Rule.keyword), url)):
+        if(re.search("(img|images|{})".format(quote(Rule.keyword)), url)):
             urls.append(url)
 
     PipeLine.insertData(urls)

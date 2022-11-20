@@ -15,6 +15,7 @@ def Start():
 
         internalLinks = getLinkList.getInLinks(url)
         SelectImageUrl.urlSelect(internalLinks) 
+        PipeLine.DownloadCorrectImg()
 
 def crawling():
     for i in range(100):

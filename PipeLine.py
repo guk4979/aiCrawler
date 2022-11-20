@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from urllib import request
 from urllib.error import HTTPError, URLError
 from PIL import Image, UnidentifiedImageError
+import socket
 import os
 import re
 
@@ -67,7 +68,7 @@ def downloadimg(status,result):
             if i is not None:
                 if i not in imgList:
                     imgList.append(i)
-
+    print("{}images 다운로드 시작".format(status))
     opener=request.build_opener()
     opener.addheaders=[('User-Agent','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36')]
     request.install_opener(opener)
@@ -89,18 +90,27 @@ def downloadimg(status,result):
                     i += 1
         except HTTPError:
             pass
+        except UnicodeEncodeError:
+            pass
+    print("{}images 다운로드 끝".format(status))
 
 
 
 def findSrc(url):
-    header = {'User-Agent':'Chrome/106.0.0.0'}
+    header = {'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36'}
     try:                              #타켓 커넥 예외 처리
+        socket.setdefaulttimeout(5)
         req = request.Request(url, headers=header)
         html = request.urlopen(req)
+        
     except HTTPError: 
-        pass
+        print("HTTPSError")
     except URLError:
-        pass
+        print("URLError")
+    except UnicodeDecodeError:
+        print("UnicodeDecodeError")
+    except Exception as e:
+        print(e)
     else:
         temp = []
         bs = BeautifulSoup(html, "html.parser")
