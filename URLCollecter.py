@@ -2,6 +2,7 @@ from urllib.parse import urlparse
 import urllib.request
 from urllib import error
 from bs4 import BeautifulSoup
+import socket
 import re
 
 
@@ -11,10 +12,13 @@ class getUrl:
         header = {'User-Agent':'Chrome/106.0.0.0'}
 
         try:                              #타켓 커넥 예외 처리
+            socket.setdefaulttimeout(20)
             req = urllib.request.Request(startingPage, headers=header)
             html = urllib.request.urlopen(req)
         except error.HTTPError as err: 
             print(err.code)
+            return 0
+        except socket.timeout:
             return 0
         self.bs = BeautifulSoup(html, 'html.parser')
         self.domain = urlparse(startingPage).netloc

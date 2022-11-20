@@ -9,11 +9,11 @@ import re
 
 searchNameLists = ["p","q","query"]
 
-class Search:
+class Search():
 
-    def __init__(self) -> None:
+    def __init__(self,num) -> None:
         self.searchUrl = None
-
+        self.num = num
         self.urlSelect(self.requestInUrl())
 
         if(self.searchUrl == None): #외부 url 요청
@@ -23,7 +23,6 @@ class Search:
             if(self.searchUrl == None):
                 print("No Found SearchUrl")
                 exit()
-        Rule.searchUrl = self.searchUrl
 
     def urlSelect(self, urlLists): #검색엔진의 이미지 검색 url 찾기
         for url in urlLists:
@@ -33,21 +32,22 @@ class Search:
         print(self.searchUrl)
 
     def requestInUrl(self):
-        return getLinkList.getInLinks(Rule.startUrl)
+        return getLinkList.getInLinks(Rule.startUrl[self.num])
 
     def requestExUrl(self):
-        return getLinkList.getExLinks(Rule.startUrl)
+        return getLinkList.getExLinks(Rule.startUrl[self.num])
 
     def search(self):
-        self.sel = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
-        self.sel.get(Rule.searchUrl)
+        options = webdriver.ChromeOptions()
+        options.add_argument('headless')
+        self.sel = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), chrome_options=options)
+        self.sel.get(self.searchUrl)
         for name in searchNameLists:
             try:                
                 self.elem = self.sel.find_element(By.NAME, name)
                 break
             except: pass
 
-        # self.elem = sel.find_element(By.NAME, )
         self.elem.send_keys(Rule.keyword + Keys.RETURN)
         url = self.sel.current_url
         self.sel.quit()
