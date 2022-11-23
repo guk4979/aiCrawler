@@ -15,7 +15,7 @@ poolcount = 15
 class PipeLine:
 
     def insertData(urls):
-        con = pymysql.connect(user='crawler', passwd='1234', database='indexURL' ,host='localhost', charset='utf8')
+        con = pymysql.connect(user=Rule.dbuser, passwd=Rule.dbpasswd, database=Rule.dbname ,host='localhost', charset='utf8')
         cur = con.cursor()
         sql = 'INSERT INTO {} (URL, DOMAIN) VALUES( %s, %s)'.format(Rule.keyword)
         for url in urls:
@@ -26,7 +26,7 @@ class PipeLine:
         con.commit()
 
     def importData():
-        con = pymysql.connect(user='crawler', passwd='1234', database='indexURL' ,host='localhost', charset='utf8')
+        con = pymysql.connect(user=Rule.dbuser, passwd=Rule.dbpasswd, database=Rule.dbname ,host='localhost', charset='utf8')
         cur = con.cursor()
         sql = 'SELECT * FROM {} WHERE IMPORT=0'.format(Rule.keyword)
         cur.execute(sql)
@@ -36,7 +36,7 @@ class PipeLine:
         return result
 
     def DownloadCorrectImg():
-        con = pymysql.connect(user='crawler', passwd='1234', database='indexURL' ,host='localhost', charset='utf8')
+        con = pymysql.connect(user=Rule.dbuser, passwd=Rule.dbpasswd, database=Rule.dbname ,host='localhost', charset='utf8')
         cur = con.cursor()
         sql = "SELECT URL FROM {} WHERE DOMAIN= %s|%s".format(Rule.keyword)
         cur.execute(sql, (Rule.seedDomain[0], Rule.seedDomain[1]))
@@ -44,7 +44,7 @@ class PipeLine:
         downloadimg("Correct",result)
         
     def DownloadIncorrectImg():
-        con = pymysql.connect(user='crawler', passwd='1234', database='indexURL' ,host='localhost', charset='utf8')
+        con = pymysql.connect(user=Rule.dbuser, passwd=Rule.dbpasswd, database=Rule.dbname ,host='localhost', charset='utf8')
         cur = con.cursor()
         sql = "SELECT URL FROM {} WHERE DOMAIN != %s|%s".format(Rule.keyword)
         cur.execute(sql, (Rule.seedDomain[0], Rule.seedDomain[1]))
@@ -114,7 +114,7 @@ def findSrc(url):
     else:
         temp = []
         bs = BeautifulSoup(html, "html.parser")
-        for link in bs.findAll('img', src=re.compile('^(http|data)')):
+        for link in bs.findAll('img', src=re.compile('^http')):
             if link.attrs['src'] is not None:
                 if link.attrs['src'] not in temp:
                     temp.append(link.attrs['src'])

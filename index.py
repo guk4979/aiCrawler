@@ -29,7 +29,7 @@ def classify():
     pass
 
 if __name__ == '__main__':
-    con = pymysql.connect(user='crawler', passwd='1234', database='indexURL' ,host='localhost', charset='utf8')
+    con = pymysql.connect(user=Rule.dbuser, passwd=Rule.dbpasswd, database=Rule.dbname ,host='localhost', charset='utf8')
     cur = con.cursor()
     try:
         table_name = Rule.keyword
