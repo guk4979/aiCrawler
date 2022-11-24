@@ -49,8 +49,8 @@ class PipeLine:
         con.close()
         downloadimg("Correct",result)
         
-    def DownloadIncorrectImg(lock):
-        lock.acuire()
+    def DownloadIncorrectImg(name,lock):
+        lock.acquire()
         con = pymysql.connect(user=Rule.dbuser, passwd=Rule.dbpasswd, database=Rule.dbname ,host='localhost', charset='utf8')
         cur = con.cursor()
         sql = "SELECT URL FROM {} WHERE DOWNLOAD = 0".format(Rule.keyword)

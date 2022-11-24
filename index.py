@@ -27,7 +27,7 @@ def crawling():
         PipeLine.insertData(exLinks)
         i += 1
         if i % 2 == 0:
-            p = Process(target= PipeLine.DownloadIncorrectImg, args=(lock))
+            p = Process(target= PipeLine.DownloadIncorrectImg, args=(__name__,lock))
             p.start()
         if i % 4 == 0:
             p2 = Process(target= classify)
@@ -59,7 +59,10 @@ if __name__ == '__main__':
             Start()
     else:
         Start()
+    try:
+        if listdir("./features/IncorrectImages/{}".format(Rule.keyword)) != []:
+            Classify.classify()
+    except FileNotFoundError:
+        pass
 
-    if listdir("./features/IncorrectImages/{}".format(Rule.keyword)) != []:
-        Classify.classify()
     crawling()
