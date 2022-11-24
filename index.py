@@ -7,7 +7,7 @@ import pymysql
 import Rule
 import Classify
 from multiprocessing import Process, Lock
-from os import listdir
+from os import listdir ,  mkdir
 
 def Start():
     print("First crawling")
@@ -43,7 +43,7 @@ def classify():
 if __name__ == '__main__':
     con = pymysql.connect(user=Rule.dbuser, passwd=Rule.dbpasswd, database=Rule.dbname ,host='localhost', charset='utf8')
     cur = con.cursor()
-    os.mkdir("./CorrectImages/{}".format(Rule.keyword))
+    mkdir("./CorrectImages/{}".format(Rule.keyword))
     try:
         table_name = Rule.keyword
         sql = "CREATE TABLE {} (ID INT PRIMARY KEY AUTO_INCREMENT, URL TEXT NOT NULL UNIQUE, DOMAIN VARCHAR(100), IMPORT INT DEFAULT 0, DOWNLOAD INT DEFAULT 0)".format(Rule.keyword)
