@@ -12,7 +12,7 @@ import socket
 import os
 import re
 
-poolcount = 3
+poolcount = 10
 
 class PipeLine:
 
@@ -30,10 +30,14 @@ class PipeLine:
     def importData():
         con = pymysql.connect(user=Rule.dbuser, passwd=Rule.dbpasswd, database=Rule.dbname ,host='localhost', charset='utf8')
         cur = con.cursor()
-        sql = 'SELECT * FROM {} WHERE IMPORT=0'.format(Rule.keyword)
+        sql = 'SELECT URL FROM {} WHERE IMPORT=0'.format(Rule.keyword)
         cur.execute(sql)
-        result = [item[0] for item in cur.fetchall()]
-        sql2 = 'UPDATE {} SET IMPORT=1 WHERE IMPORT=0'.format(Rule.keyword)
+        result = [item[0] for item in cur.fetchall()[:10]]
+        sql3 = "SELECT ID FROM {} WHERE URL='{}'".format(Rule.keyword, result[9])
+        cur.execute(sql3)
+        last_id = cur.fetchone()
+
+        sql2 = 'UPDATE {} SET IMPORT=1 WHERE IMPORT=0 AND ID <= {}'.format(Rule.keyword, last_id[0])
         cur.execute(sql2)
         con.commit()
         return result
@@ -56,6 +60,10 @@ class PipeLine:
         sql = "SELECT URL FROM {} WHERE DOWNLOAD = 0".format(Rule.keyword)
         cur.execute(sql)
         result = [item[0] for item in cur.fetchall()]
+        
+        sql = 'UPDATE {} SET DOWNLOAD=1 WHERE DOWNLOAD=0'.format(Rule.keyword)
+        cur.execute(sql)
+        con.commit()
         downloadimg("Incorrect",result)
         lock.release()
 
@@ -92,7 +100,7 @@ def downloadimg(status,result):
         os.mkdir(feature_path)
     for imgurl in imgList:
         try:
-            name = i
+            name = avoidDuplication(img_path, feature_path ,i)
             path = img_path + "/" + str(name) + ".jpg"
             fe_path = feature_path + "/" + str(name) + ".npy"
             request.urlretrieve(imgurl,path)
@@ -100,32 +108,33 @@ def downloadimg(status,result):
                 Image.open(path)
             except UnidentifiedImageError:
                 print("unidentify")
+                os.remove(path)
             else:
                 if Image.open(path).size[1] <= 100:
                     os.remove(path)
                 else:
-                    if not os.path.exists(fe_path):
-                        try:
-                            feature = fe.extract(Image.open(path))
-                            np.save(fe_path, feature)
-                            i += 1
-                        except Exception as e:
-                            os.remove(path)
-                    else:
+                    try:
+                        feature = fe.extract(Image.open(path))
+                        np.save(fe_path, feature)
+                    except Exception as e:
                         os.remove(path)
+                        os.remove(fe_path)
+                    if not os.path.exists(fe_path):
+                        os.remove(path)
+                        os.remove(fe_path)
                     
         except HTTPError:
             pass
         except UnicodeEncodeError:
             pass
-    if status == 'Incorrect':
-        con = pymysql.connect(user=Rule.dbuser, passwd=Rule.dbpasswd, database=Rule.dbname ,host='localhost', charset='utf8')
-        cur = con.cursor()
-        sql = 'UPDATE {} SET DOWNLOAD=1 WHERE DOWNLOAD=0'.format(Rule.keyword)
-        cur.execute(sql)
-        con.commit()
+    
     print("{}images 다운로드 끝".format(status))
 
+def avoidDuplication(path,fet_path,num):
+  i = num
+  while os.path.exists(path + "/" + str(i) + ".jpg") | os.path.exists(fet_path + "/" + str(i) + ".npy"):
+    i += 1
+  return i
 
 
 def findSrc(url):

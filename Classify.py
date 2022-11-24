@@ -93,17 +93,17 @@ def classify():
 
 
   # Calculate the similarity (distance) between images
-  value = 0
-  for i in range(len(querys)):
-    value += features - querys[i]
+  value = features - querys[0]
+  for i in range(len(querys)-1):
+    value += features - querys[i+1]
   value = value / len(querys)
 
   dists = np.linalg.norm(value, axis=1)
 
-  # Extract 30 images that have lowest distance
   ids = np.argsort(dists)
 
-  scores = [(dists[id], incorrectimg_paths[id], id) for id in ids]
+  scores = [(dists[id], incorrectimg_paths[id]) for id in ids]
+
   # Visualize the result
   # axes=[]
   # fig=plt.figure(figsize=(10,20))
@@ -124,16 +124,18 @@ def classify():
     fe_name = img_name
     fe_path = os.path.join("./features/IncorrectImages/{}/{}.npy".format(Rule.keyword, fe_name))
     if score[0] <= 0.95:
-      new_name = avoidDuplication(img_name)
+      new_name = avoidDuplication()
       shutil.move(score[1], "./CorrectImages/{}/{}.jpg".format(Rule.keyword, new_name))
       shutil.move(fe_path, "./features/CorrectImages/{}/{}.npy".format(Rule.keyword, new_name))
+      if os.path.exists(fe_path):
+        os.path.remove(fe_path)
   
   # shutil.rmtree("./IncorrectImages/{}".format(Rule.keyword))
   # shutil.rmtree("./features/IncorrectImages/{}".format(Rule.keyword))
 
-def avoidDuplication(num):
-  i = num
-  while os.path.exists("./CorrectImages/{}/{}.jpg".format(Rule.keyword, str(i))):
+def avoidDuplication():
+  i = 0
+  while os.path.exists("./CorrectImages/{}/{}.jpg".format(Rule.keyword, str(i))) & os.path.exists("./features/CorrectImages/{}/{}.npy".format(Rule.keyword, str(i))):
     i += 1
   return i
 

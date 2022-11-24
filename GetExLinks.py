@@ -11,7 +11,7 @@ def links(url):
 def getLinks(link):
     ExteranlUrlList = []
     print('pid of main:', os.getpid())
-    p = Pool(5)
+    p = Pool(10)
     data = p.map_async(links, link)
     for i in data.get():
         if i == None:

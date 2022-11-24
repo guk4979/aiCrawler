@@ -22,20 +22,21 @@ def Start():
 def crawling():
     print("Crawling . .")
     lock = Lock()
-    for i in range(10):
+    for i in range(5):
         exLinks = GetExLinks.getLinks(PipeLine.importData())
         PipeLine.insertData(exLinks)
-        i += 1
-        if i % 2 == 0:
-            p = Process(target= PipeLine.DownloadIncorrectImg, args=(__name__,lock))
-            p.start()
-        if i % 4 == 0:
-            p2 = Process(target= classify)
-            p2.start()
-            p2.join()
+        if i != 0:
+            if i % 2 == 0:
+                p = Process(target= PipeLine.DownloadIncorrectImg, args=(__name__,lock))
+                p.start()
+            if i % 5 == 0:
+                classify()
 
 def classify():
-    PipeLine.DownloadIncorrectImg()
+    lock = Lock()
+    p2 = Process(target= PipeLine.DownloadIncorrectImg, args=(__name__,lock))
+    p2.start()
+    p2.join()
     Classify.classify()
 
 
@@ -43,7 +44,10 @@ def classify():
 if __name__ == '__main__':
     con = pymysql.connect(user=Rule.dbuser, passwd=Rule.dbpasswd, database=Rule.dbname ,host='localhost', charset='utf8')
     cur = con.cursor()
-    mkdir("./CorrectImages/{}".format(Rule.keyword))
+    try:
+        mkdir("./CorrectImages/{}".format(Rule.keyword))
+    except FileExistsError:
+        pass
     try:
         table_name = Rule.keyword
         sql = "CREATE TABLE {} (ID INT PRIMARY KEY AUTO_INCREMENT, URL TEXT NOT NULL UNIQUE, DOMAIN VARCHAR(100), IMPORT INT DEFAULT 0, DOWNLOAD INT DEFAULT 0)".format(Rule.keyword)
@@ -60,10 +64,5 @@ if __name__ == '__main__':
             Start()
     else:
         Start()
-    try:
-        if listdir("./features/IncorrectImages/{}".format(Rule.keyword)) != []:
-            Classify.classify()
-    except FileNotFoundError:
-        pass
 
     crawling()
