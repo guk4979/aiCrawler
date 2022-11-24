@@ -1,140 +1,141 @@
-import numpy as np
-from keras import utils
-import matplotlib.pyplot as plt
-from keras.preprocessing.image import ImageDataGenerator
-from keras.optimizers import RMSprop
-import tensorflow as tf
-import matplotlib.image as mpimg
-import matplotlib.pyplot as plt
+# Import the libraries
 import os
+from keras import utils
+from keras.applications.vgg16 import VGG16, preprocess_input
+from keras.models import Model
+from keras.layers import Concatenate
 from PIL import Image
+import matplotlib.pyplot as plt
+import numpy as np
 import Rule
+from multiprocessing import Pool
+import shutil
 
-# local_zip = '/tmp/cats_and_dogs_filtered.zip'
+class FeatureExtractor:
+  def __init__(self):
+      # Use VGG-16 as the architecture and ImageNet for the weight
+      base_model = VGG16(weights='imagenet')
+      # Customize the model to return features from fully-connected layer
+      self.model = Model(inputs=base_model.input, outputs=base_model.get_layer('fc1').output)
 
-# zip_ref = zipfile.ZipFile(local_zip, 'r')
+  def extract(self, img):
+      # Resize the image
+      img = img.resize((224, 224))
+      # Convert the image color space
+      img = img.convert('RGB')
+      # Reformat the image
+      x = utils.img_to_array(img)
+      x = np.expand_dims(x, axis=0)
+      x = preprocess_input(x)
+      # Extract Features
+      feature = self.model.predict(x)[0]
+      return feature / np.linalg.norm(feature)
 
-# zip_ref.extractall('/tmp')
-# zip_ref.close()
+# def saveImgFeature(img_path):
+#   try:
+#     # Extract Features
+#     fe = FeatureExtractor()
+#     feature = fe.extract(img=Image.open(img_path))
 
-base_dir = './CorrectImages'
+#     # return feature
 
-train_dir = base_dir
-train_cat_dir = os.path.join(base_dir, Rule.keyword)
-validation_dir = os.path.join(base_dir, 'validation')
+#     # Save the Numpy array (.npy) on designated path
+#     feature_path = "./features/" + str(i) + ".npy"
+#     np.save(feature_path, feature)
+#   except Exception as e:
+#     print('예외가 발생했습니다.', e)
 
-# 훈련에 사용되는 고양이/개 이미지 경로
-# train_dogs_dir = os.path.join(train_dir, 'dogs')
-print(train_cat_dir)
-# print(train_dogs_dir)
+def classify():
 
-# 테스트에 사용되는 고양이/개 이미지 경로
-# validation_cats_dir = os.path.join(validation_dir, 'cats')
-# validation_dogs_dir = os.path.join(validation_dir, 'dogs')
-# print(validation_cats_dir)
-# print(validation_dogs_dir)
-train_fnames = os.listdir( train_cat_dir )
-# train_dog_fnames = os.listdir( train_dogs_dir )
+  features = []
+  querys = []
+  cor_base_dir = "./CorrectImages"
+  incor_base_dir = "./IncorrectImages"
+  cor_feature_dir = "./features/CorrectImages"
+  incor_feature_dir = "./features/IncorrectImages"
+  correct_dir = os.path.join(cor_base_dir, Rule.keyword)
+  correct_img = os.listdir(correct_dir)
+  correct_feature_dir = os.path.join(cor_feature_dir, Rule.keyword)
+  correctimg_paths = []
+  incorrect_dir = os.path.join(incor_base_dir, Rule.keyword)
+  incorrect_img = os.listdir(incorrect_dir)
+  incorrect_feature_dir = os.path.join(incor_feature_dir, Rule.keyword)
+  incorrectimg_paths = []
 
-print(train_fnames[:5])
-# print(train_dog_fnames[:5])
+  # Save Image Feature Vector with Database Images
+  # fe = FeatureExtractor()
 
-print('Total training cat images :', len(os.listdir(train_cat_dir)))
-# print('Total training dog images :', len(os.listdir(train_dogs_dir)))
+  for img in correct_img:
+    image_path = os.path.join(correct_dir, img)
+    correctimg_paths.append(image_path)
 
-# print('Total validation cat images :', len(os.listdir(validation_cats_dir)))
-# print('Total validation dog images :', len(os.listdir(validation_dogs_dir)))
+  for img in incorrect_img:
+    image_path = os.path.join(incorrect_dir, img)
+    incorrectimg_paths.append(image_path)
 
+  #이미지 feature 가져오기
+  for i in os.listdir(incorrect_feature_dir):
+    feature = np.load(os.path.join(incorrect_feature_dir, i))
+    features.append(feature)
 
-nrows, ncols = 4, 4
-pic_index = 0
+  for i in os.listdir(correct_feature_dir):
+    feature = np.load(os.path.join(correct_feature_dir, i))
+    querys.append(feature)
 
-fig = plt.gcf()
-fig.set_size_inches(ncols*3, nrows*3)
+  # Insert the image query
+  # for i in os.listdir(correct_img):
+  #   img = Image.open(.format(i))
+  #   query = fe.extract(img)
+  #   querys.append(query)
 
-pic_index+=8
-
-next_cat_pix = [os.path.join(train_cat_dir, fname)
-                for fname in train_fnames[ pic_index-8:pic_index]]
-
-# next_dog_pix = [os.path.join(train_dogs_dir, fname)
-#                 for fname in train_dog_fnames[ pic_index-8:pic_index]]
-
-for i, img_path in enumerate(next_cat_pix):
-  sp = plt.subplot(nrows, ncols, i + 1)
-  sp.axis('Off')
-
-  img = mpimg.imread(img_path)
-  plt.imshow(img)
-
-plt.show()
-
-
-model = tf.keras.models.Sequential([
-  tf.keras.layers.Conv2D(16, (3,3), activation='relu', input_shape=(150, 150, 3)),
-  tf.keras.layers.MaxPooling2D(2,2),
-  tf.keras.layers.Conv2D(32, (3,3), activation='relu'),
-  tf.keras.layers.MaxPooling2D(2,2),
-  tf.keras.layers.Conv2D(64, (3,3), activation='relu'),
-  tf.keras.layers.MaxPooling2D(2,2),
-  tf.keras.layers.Flatten(),
-  tf.keras.layers.Dense(512, activation='relu'),
-  tf.keras.layers.Dense(1, activation='sigmoid')
-])
-
-model.summary()
-
-model.compile(optimizer=RMSprop(lr=0.001),
-            loss='binary_crossentropy',
-            metrics = ['accuracy'])
-
-
-
-train_datagen = ImageDataGenerator( rescale = 1.0/255. )
-test_datagen  = ImageDataGenerator( rescale = 1.0/255. ) #ImageDataGenerator(horizontal_flip=True, vertical_flip=True, rescale=1/255.0, rotation_range=0.45,zoom_range=[0.5, 1.5])
-
-train_generator = train_datagen.flow_from_directory(train_dir,
-                                                  batch_size=20,
-                                                  class_mode='binary',
-                                                  target_size=(150, 150))
-validation_generator =  test_datagen.flow_from_directory(train_dir,
-                                                       batch_size=20,
-                                                       class_mode  = 'binary',
-                                                       target_size = (150, 150))
-
-history = model.fit(train_generator,
-                    validation_data=validation_generator,
-                    steps_per_epoch=3,
-                    epochs=20,
-                    validation_steps=20,
-                    verbose=2)
-
-acc = history.history['accuracy']
-val_acc = history.history['val_accuracy']
-loss = history.history['loss']
-val_loss = history.history['val_loss']
-
-epochs = range(len(acc))
-
-plt.plot(epochs, acc, 'bo', label='Training accuracy')
-plt.plot(epochs, val_acc, 'b', label='Validation accuracy')
-plt.title('Training and validation accuracy')
-plt.legend()
-
-plt.figure()
-
-plt.plot(epochs, loss, 'go', label='Training Loss')
-plt.plot(epochs, val_loss, 'g', label='Validation Loss')
-plt.title('Training and validation loss')
-plt.legend()
-
-plt.show()
+  # query = Concatenate()([query1, query2]).numpy()
+  # print(query)
 
 
-img=utils.load_img("./test.jpg", target_size=(150, 150))
-x=utils.img_to_array(img)
-x=np.expand_dims(x, axis=0)
-images = np.vstack([x])
+  # Calculate the similarity (distance) between images
+  value = 0
+  for i in range(len(querys)):
+    value += features - querys[i]
+  value = value / len(querys)
 
-classes = model.predict(images, batch_size=10)
-print(classes[0])
+  dists = np.linalg.norm(value, axis=1)
+
+  # Extract 30 images that have lowest distance
+  ids = np.argsort(dists)
+
+  scores = [(dists[id], incorrectimg_paths[id], id) for id in ids]
+  # Visualize the result
+  # axes=[]
+  # fig=plt.figure(figsize=(10,20))
+  # for a in range(len(scores)):
+  #     score = scores[a]
+  #     axes.append(fig.add_subplot(10, 20, a+1))
+  #     subplot_title=str(round(score[0],2)) + "/m" + str(score[2]+1)
+  #     axes[-1].set_title(subplot_title)  
+  #     plt.axis('off')
+  #     plt.imshow(Image.open(score[1]))
+  # fig.tight_layout()
+  # plt.show()
+
+  for a in range(len(scores)):
+    score = scores[a]
+    img_name = score[1]
+    img_name = int(img_name[:-4].replace("./IncorrectImages\\{}\\".format(Rule.keyword), ""))
+    fe_name = img_name
+    fe_path = os.path.join("./features/IncorrectImages/{}/{}.npy".format(Rule.keyword, fe_name))
+    if score[0] <= 0.95:
+      new_name = avoidDuplication(img_name)
+      shutil.move(score[1], "./CorrectImages/{}/{}.jpg".format(Rule.keyword, new_name))
+      shutil.move(fe_path, "./features/CorrectImages/{}/{}.npy".format(Rule.keyword, new_name))
+  
+  # shutil.rmtree("./IncorrectImages/{}".format(Rule.keyword))
+  # shutil.rmtree("./features/IncorrectImages/{}".format(Rule.keyword))
+
+def avoidDuplication(num):
+  i = num
+  while os.path.exists("./CorrectImages/{}/{}.jpg".format(Rule.keyword, str(i))):
+    i += 1
+  return i
+
+if __name__ == "__main__":
+  classify()
