@@ -17,7 +17,7 @@ poolcount = 10
 class PipeLine:
 
     def insertData(urls):
-        con = pymysql.connect(user=Rule.dbuser, passwd=Rule.dbpasswd, database=Rule.dbname ,host='localhost', charset='utf8')
+        con = pymysql.connect(user=Rule.dbuser, passwd=Rule.dbpasswd, database=Rule.dbname ,host=Rule.dbhost, charset='utf8')
         cur = con.cursor()
         sql = 'INSERT INTO {} (URL, DOMAIN) VALUES( %s, %s)'.format(Rule.keyword)
         for url in urls:
@@ -28,7 +28,7 @@ class PipeLine:
         con.commit()
 
     def importData():
-        con = pymysql.connect(user=Rule.dbuser, passwd=Rule.dbpasswd, database=Rule.dbname ,host='localhost', charset='utf8')
+        con = pymysql.connect(user=Rule.dbuser, passwd=Rule.dbpasswd, database=Rule.dbname ,host=Rule.dbhost, charset='utf8')
         cur = con.cursor()
         sql = 'SELECT URL FROM {} WHERE IMPORT=0'.format(Rule.keyword)
         cur.execute(sql)
@@ -43,7 +43,7 @@ class PipeLine:
         return result
 
     def DownloadCorrectImg():
-        con = pymysql.connect(user=Rule.dbuser, passwd=Rule.dbpasswd, database=Rule.dbname ,host='localhost', charset='utf8')
+        con = pymysql.connect(user=Rule.dbuser, passwd=Rule.dbpasswd, database=Rule.dbname ,host=Rule.dbhost, charset='utf8')
         cur = con.cursor()
         sql = "SELECT URL FROM {} WHERE DOMAIN=%s|%s AND DOWNLOAD = 0".format(Rule.keyword)
         cur.execute(sql,(Rule.seedDomain[0], Rule.seedDomain[1]))
@@ -55,7 +55,7 @@ class PipeLine:
         
     def DownloadIncorrectImg(name,lock):
         lock.acquire()
-        con = pymysql.connect(user=Rule.dbuser, passwd=Rule.dbpasswd, database=Rule.dbname ,host='localhost', charset='utf8')
+        con = pymysql.connect(user=Rule.dbuser, passwd=Rule.dbpasswd, database=Rule.dbname ,host=Rule.dbhost, charset='utf8')
         cur = con.cursor()
         sql = "SELECT URL FROM {} WHERE DOWNLOAD = 0".format(Rule.keyword)
         cur.execute(sql)
@@ -112,6 +112,8 @@ def downloadimg(status,result):
             else:
                 if Image.open(path).size[1] <= 100:
                     os.remove(path)
+                # if img = Image.open(path).size[1] <= 300:
+                    
                 else:
                     try:
                         feature = fe.extract(Image.open(path))

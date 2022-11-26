@@ -42,7 +42,7 @@ def classify():
 
 
 if __name__ == '__main__':
-    con = pymysql.connect(user=Rule.dbuser, passwd=Rule.dbpasswd, database=Rule.dbname ,host='localhost', charset='utf8')
+    con = pymysql.connect(user=Rule.dbuser, passwd=Rule.dbpasswd, database=Rule.dbname ,host=Rule.dbhost, charset='utf8')
     cur = con.cursor()
     try:
         mkdir("./CorrectImages/{}".format(Rule.keyword))
@@ -52,7 +52,7 @@ if __name__ == '__main__':
         table_name = Rule.keyword
         sql = "CREATE TABLE {} (ID INT PRIMARY KEY AUTO_INCREMENT, URL TEXT NOT NULL UNIQUE, DOMAIN VARCHAR(100), IMPORT INT DEFAULT 0, DOWNLOAD INT DEFAULT 0)".format(Rule.keyword)
         cur.execute(sql)
-    except pymysql.err.OperationalError: 
+    except pymysql.err.ProgrammingError: 
         sql2 = "SELECT ID FROM {} WHERE DOMAIN=%s|%s".format(Rule.keyword)
         cur.execute(sql2, (Rule.seedDomain[0], Rule.seedDomain[1]))
         result = cur.fetchone()
