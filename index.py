@@ -20,23 +20,16 @@ def Start():
     PipeLine.DownloadCorrectImg()
 
 def crawling():
-    print("Crawling . .")
     lock = Lock()
-    for i in range(5):
+    print("Crawling . .")
+    for i in range(20):
         exLinks = GetExLinks.getLinks(PipeLine.importData())
         PipeLine.insertData(exLinks)
         if i != 0:
             if i % 2 == 0:
-                p = Process(target= PipeLine.DownloadIncorrectImg, args=(__name__,lock))
-                p.start()
-            if i % 5 == 0:
                 classify()
 
 def classify():
-    lock = Lock()
-    p2 = Process(target= PipeLine.DownloadIncorrectImg, args=(__name__,lock))
-    p2.start()
-    p2.join()
     Classify.classify()
 
 

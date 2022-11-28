@@ -1,15 +1,12 @@
 # Import the libraries
-import os
-from keras import utils
-from keras.applications.vgg16 import VGG16, preprocess_input
-from keras.models import Model
-from keras.layers import Concatenate
 from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
 import Rule
-from multiprocessing import Pool
-import shutil
+from multiprocessing import Pool, Lock
+import shutil  
+from PipeLine import PipeLine
+import os
 
 class FeatureExtractor:
   def __init__(self):
@@ -46,7 +43,9 @@ class FeatureExtractor:
 #     print('예외가 발생했습니다.', e)
 
 def classify():
-
+  lock = Lock()
+  PipeLine.DownloadIncorrectImg(__name__, lock)
+  print("분류 시작")
   features = []
   querys = []
   cor_base_dir = "./CorrectImages"
@@ -126,9 +125,12 @@ def classify():
     if score[0] <= 0.95:
       new_name = avoidDuplication()
       shutil.move(score[1], "./CorrectImages/{}/{}.jpg".format(Rule.keyword, new_name))
-      shutil.move(fe_path, "./features/CorrectImages/{}/{}.npy".format(Rule.keyword, new_name))
+      try:
+        shutil.move(fe_path, "./features/CorrectImages/{}/{}.npy".format(Rule.keyword, new_name))
+      except FileNotFoundError:
+        os.remove("./features/CorrectImages/{}/{}.npy".format(Rule.keyword, new_name))
       if os.path.exists(fe_path):
-        os.path.remove(fe_path)
+        os.remove(fe_path)
   
   # shutil.rmtree("./IncorrectImages/{}".format(Rule.keyword))
   # shutil.rmtree("./features/IncorrectImages/{}".format(Rule.keyword))
