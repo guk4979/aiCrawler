@@ -4,5 +4,5 @@ searchUrl = None
 keyword = "cat"
 seedDomain = [str(urlparse(startUrl[0]).netloc), str(urlparse(startUrl[1]).netloc)]
 dbuser = "root"
-dbpasswd = "jason29594979"
+dbpasswd = ""
 dbname = "indexurl"
