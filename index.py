@@ -33,10 +33,6 @@ def crawling():
                 classify()
 
 def classify():
-    lock = Lock()
-    p2 = Process(target= PipeLine.DownloadIncorrectImg, args=(__name__,lock))
-    p2.start()
-    p2.join()
     Classify.classify()
 
 
@@ -50,9 +46,9 @@ if __name__ == '__main__':
         pass
     try:
         table_name = Rule.keyword
-        sql = "CREATE TABLE {} (ID INT PRIMARY KEY AUTO_INCREMENT, URL TEXT NOT NULL UNIQUE, DOMAIN VARCHAR(100), IMPORT INT DEFAULT 0, DOWNLOAD INT DEFAULT 0)".format(Rule.keyword)
+        sql = "CREATE TABLE {} (ID INT PRIMARY KEY AUTO_INCREMENT, URL TEXT NOT NULL, DOMAIN VARCHAR(100), IMPORT INT DEFAULT 0, DOWNLOAD INT DEFAULT 0, UNIQUE(URL(512)))".format(Rule.keyword)
         cur.execute(sql)
-    except pymysql.err.ProgrammingError: 
+    except pymysql.err.OperationalError: 
         sql2 = "SELECT ID FROM {} WHERE DOMAIN=%s|%s".format(Rule.keyword)
         cur.execute(sql2, (Rule.seedDomain[0], Rule.seedDomain[1]))
         result = cur.fetchone()

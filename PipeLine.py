@@ -6,13 +6,36 @@ from bs4 import BeautifulSoup
 from urllib import request
 from urllib.error import HTTPError, URLError
 from PIL import Image, UnidentifiedImageError
-from Classify import FeatureExtractor
+from keras import utils
+from keras.applications.vgg16 import VGG16, preprocess_input
+from keras.models import Model
+from keras.layers import Concatenate
 import numpy as np
 import socket
 import os
 import re
 
-poolcount = 10
+poolcount = 5
+
+class FeatureExtractor:
+  def __init__(self):
+      # Use VGG-16 as the architecture and ImageNet for the weight
+      base_model = VGG16(weights='imagenet')
+      # Customize the model to return features from fully-connected layer
+      self.model = Model(inputs=base_model.input, outputs=base_model.get_layer('fc1').output)
+
+  def extract(self, img):
+      # Resize the image
+      img = img.resize((224, 224))
+      # Convert the image color space
+      img = img.convert('RGB')
+      # Reformat the image
+      x = utils.img_to_array(img)
+      x = np.expand_dims(x, axis=0)
+      x = preprocess_input(x)
+      # Extract Features
+      feature = self.model.predict(x)[0]
+      return feature / np.linalg.norm(feature)
 
 class PipeLine:
 
@@ -157,8 +180,24 @@ def findSrc(url):
     else:
         temp = []
         bs = BeautifulSoup(html, "html.parser")
-        for link in bs.findAll('img', src=re.compile('^http')):
-            if link.attrs['src'] is not None:
-                if link.attrs['src'] not in temp:
-                    temp.append(link.attrs['src'])
+        print(url)
+        
+        if request.urlparse(url).netloc == Rule.seedDomain[0]:
+            pa = bs.find('div', jsname = 'V7lXsd')
+            print('pa:', pa)
+            if pa == None:
+                pa = bs
+            for link in pa.findAll('img', src=re.compile('^http')):
+                if link.attrs['src'] is not None:
+                    if link.attrs['src'] not in temp:
+                        temp.append(link.attrs['src'])
+        else:
+            for link in bs.findAll('img', src=re.compile('^http')):
+                if link.attrs['src'] is not None:
+                    if link.attrs['src'] not in temp:
+                        if re.search('bing', urlparse(link.attrs['src']).netloc):
+                            src = link.attrs['src'].split('?')
+                            temp.append(src[0])
+                        else:
+                            temp.append(link.attrs['src'])
         return temp

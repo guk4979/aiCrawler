@@ -1,9 +1,5 @@
 # Import the libraries
 import os
-from keras import utils
-from keras.applications.vgg16 import VGG16, preprocess_input
-from keras.models import Model
-from keras.layers import Concatenate
 from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,25 +7,7 @@ import Rule
 from multiprocessing import Pool
 import shutil
 
-class FeatureExtractor:
-  def __init__(self):
-      # Use VGG-16 as the architecture and ImageNet for the weight
-      base_model = VGG16(weights='imagenet')
-      # Customize the model to return features from fully-connected layer
-      self.model = Model(inputs=base_model.input, outputs=base_model.get_layer('fc1').output)
 
-  def extract(self, img):
-      # Resize the image
-      img = img.resize((224, 224))
-      # Convert the image color space
-      img = img.convert('RGB')
-      # Reformat the image
-      x = utils.img_to_array(img)
-      x = np.expand_dims(x, axis=0)
-      x = preprocess_input(x)
-      # Extract Features
-      feature = self.model.predict(x)[0]
-      return feature / np.linalg.norm(feature)
 
 # def saveImgFeature(img_path):
 #   try:
@@ -123,15 +101,15 @@ def classify():
     img_name = int(img_name[:-4].replace("./IncorrectImages\\{}\\".format(Rule.keyword), ""))
     fe_name = img_name
     fe_path = os.path.join("./features/IncorrectImages/{}/{}.npy".format(Rule.keyword, fe_name))
-    if score[0] <= 0.95:
+    if score[0] <= 0.96:
       new_name = avoidDuplication()
       shutil.move(score[1], "./CorrectImages/{}/{}.jpg".format(Rule.keyword, new_name))
       shutil.move(fe_path, "./features/CorrectImages/{}/{}.npy".format(Rule.keyword, new_name))
       if os.path.exists(fe_path):
         os.path.remove(fe_path)
   
-  # shutil.rmtree("./IncorrectImages/{}".format(Rule.keyword))
-  # shutil.rmtree("./features/IncorrectImages/{}".format(Rule.keyword))
+  shutil.rmtree("./IncorrectImages/{}".format(Rule.keyword))
+  shutil.rmtree("./features/IncorrectImages/{}".format(Rule.keyword))
 
 def avoidDuplication():
   i = 0
